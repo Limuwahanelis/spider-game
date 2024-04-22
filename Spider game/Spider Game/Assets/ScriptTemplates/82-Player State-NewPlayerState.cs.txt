@@ -1,0 +1,26 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class #SCRIPTNAME# : PlayerState
+{
+    public #SCRIPTNAME#(GetState function) : base(function)
+    {
+
+    }
+
+    public override void Update()
+    {
+
+    }
+
+    public override void SetUpState(PlayerContext context)
+    {
+        base.SetUpState(context);
+    }
+
+    public override void InterruptState()
+    {
+     
+    }
+}
