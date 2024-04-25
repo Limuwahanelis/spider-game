@@ -78,10 +78,12 @@ public class PlayerClimbing : MonoBehaviour
     [SerializeField] float _safeAreaRadius;
     [SerializeField] Transform[] _safeZones;
     float totalTime = 0f;
-    [SerializeField] float _lerpTime = 1;
+    [SerializeField] float _lerpSpeed = 1;
     private bool[] _isLimbLerping = new bool[8];
     private Vector3[] _startingLerpPositions= new Vector3[8];
     private Vector3[] _endLerpPositions = new Vector3[8];
+    private float[] _lerpValues = new float[8];
+    private bool[] _isFirstTimeLerping = new bool[8];
     [SerializeField] Transform[] _safeZoneRaycastOrigins= new Transform[8];
     // Start is called before the first frame update
     void Start()
@@ -340,8 +342,21 @@ public class PlayerClimbing : MonoBehaviour
             if (Vector3.Distance(_limbsTargets[i].position, _safeZones[i].position) > _safeAreaRadius)
             {
 
-                _isLimbLerping[i] = true;
-                _startingLerpPositions[i] = _limbsTargets[i].position;
+                if (!_isLimbLerping[i])
+                {
+                    bool endCheck = false;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (_isLimbLerping[j]) endCheck=true;
+                    }
+                    if(endCheck) continue;
+                    _isLimbLerping[i] = true;
+                    _isFirstTimeLerping[i] = true;
+                    _startingLerpPositions[i] = _limbsTargets[i].position;
+                    Vector3 endLerpPos = _limbsTargets[i].position + (_safeZones[i].position - _limbsTargets[i].position) / 2;
+                    endLerpPos += transform.up * 0.5f;
+                    _endLerpPositions[i] = endLerpPos;
+                }
                 //_limbsTargets[i].position =Vector3.Lerp(_limbsTargets[i].position, _safeZones[i].transform.position, Time.deltaTime * _lerpTime);// maybe add offset (target is in ankle)
                 //Vector3 tmp = _limbsTargets[i].position;
                 //tmp -= _limbsForwardTrans[i].up * _limbsOffsets[i];
@@ -360,11 +375,35 @@ public class PlayerClimbing : MonoBehaviour
             }
             if (_isLimbLerping[i])
             {
-                if (_allGroundSphereCastHits[i]) _limbsTargets[i].position = hitPoint; //Vector3.Lerp(_limbsTargets[i].position, hitPoint, Time.deltaTime * _lerpTime);
-                _limbsTargets[i].position = Vector3.Lerp(_limbsTargets[i].position, _safeZones[i].transform.position, Time.deltaTime * _lerpTime);
-                if(Vector3.Distance(_limbsTargets[i].position, _safeZones[i].transform.position)<0.1f)
+
+                _lerpValues[i] += Time.deltaTime;
+                float totalT = Vector3.Distance(_startingLerpPositions[i], _endLerpPositions[i]) / _lerpSpeed;
+                float t = _lerpValues[i] / totalT;
+                _limbsTargets[i].position = Vector3.Lerp(_startingLerpPositions[i], _endLerpPositions[i], t);
+                if (_isFirstTimeLerping[i])
                 {
-                    _isLimbLerping[i]=false;
+                    if(t>=1)
+                    {
+                        _isFirstTimeLerping[i]=false;
+                        _startingLerpPositions[i] = _endLerpPositions[i];
+                        Debug.DrawRay(_safeZoneRaycastOrigins[i].position, (_safeZones[i].position - _safeZoneRaycastOrigins[i].position));
+                        if (Physics.Raycast(_safeZoneRaycastOrigins[i].position, (_safeZones[i].position - _safeZoneRaycastOrigins[i].position), out hit, _climbingMask))
+                        {
+                            Debug.Log($"Hit {hit.point}");
+                            _endLerpPositions[i] = hit.point;
+                        }
+                        else _endLerpPositions[i] = _safeZones[i].position;
+                        _lerpValues[i] = 0;
+                    }
+                }
+                else
+                {
+                    if (t >= 1)
+                    {
+                        _limbsTargets[i].position = _safeZones[i].position;
+                        _isLimbLerping[i] = false;
+                        _lerpValues[i] = 0;
+                    }
                 }
                 //else
                 //{
