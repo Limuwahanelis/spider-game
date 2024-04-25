@@ -9,6 +9,7 @@ public abstract class PlayerState
     protected PlayerContext _context;
     public delegate PlayerState GetState(Type state);
     protected static GetState _getType;
+    
     public PlayerState(GetState function)
     {
         _getType = function;
@@ -26,6 +27,12 @@ public abstract class PlayerState
     public virtual void ChangeCurrentState()
     {
         _context.ChangePlayerState(this);
+    }
+    public void ChangeState(Type newStateType)
+    {
+        PlayerState state = _getType(newStateType);
+        _context.ChangePlayerState(state);
+        state.SetUpState(_context);
     }
 }
 

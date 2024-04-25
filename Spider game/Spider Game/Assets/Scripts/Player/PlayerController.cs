@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
 
     public PlayerState CurrentPlayerState => _currentPlayerState;
 
+    [SerializeField] PlayerClimbing _playerClimbing;
     [SerializeField] Animator _anim;
 
     private PlayerState _currentPlayerState;
@@ -24,6 +25,7 @@ public class PlayerController : MonoBehaviour
         // CalculateWalkAngle = ChangeState;
         _context = new PlayerContext
         {
+            climbing = _playerClimbing,
             ChangePlayerState = ChangeState,
             anim = _anim,
         };

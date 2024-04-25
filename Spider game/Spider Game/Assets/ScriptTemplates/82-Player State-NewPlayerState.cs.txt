@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class #SCRIPTNAME# : PlayerState
 {
+    puvlic static Type StateType { get; set; }
     public #SCRIPTNAME#(GetState function) : base(function)
     {
-
+        StateType = typeof(#SCRIPTNAME#);
     }
 
     public override void Update()
