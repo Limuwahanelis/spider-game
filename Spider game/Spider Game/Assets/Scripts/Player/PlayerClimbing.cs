@@ -204,7 +204,8 @@ public class PlayerClimbing : MonoBehaviour
 
         Debug.DrawRay(_player.position - _player.forward, _player.forward * 3f);
         _playerMovement.PlayerRB.MovePosition(cp);
-        _playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _helper.rotation * _helperRotationOffset, Time.deltaTime * _rotateSpeed);
+        //_playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _helper.rotation * _helperRotationOffset, Time.deltaTime * _rotateSpeed);
+        
         //_spineTarget.rotation = Quaternion.Slerp(_spineTarget.rotation, _spineHelper.rotation, Time.deltaTime);
     }
     #endregion
@@ -323,6 +324,20 @@ public class PlayerClimbing : MonoBehaviour
         return target + offset;
     }
     #region Limbs
+    public void RotateBody()
+    {
+        //_playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _helper.rotation * _helperRotationOffset, Time.deltaTime * _rotateSpeed);
+        Vector3 avgNormal = Vector3.zero;
+        for(int i=0;i< _allHitNormals.Length; i++)
+        {
+            avgNormal += _allHitNormals[i];
+        }
+        avgNormal=avgNormal/_allHitNormals.Length;
+        Debug.Log(avgNormal);
+        _helper.rotation = Quaternion.LookRotation(-avgNormal);
+        _playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _helper.rotation*_helperRotationOffset, Time.deltaTime * _rotateSpeed);
+        //_playerMovement.PlayerRB.rotation = newRotation;
+    }
     public void SetUpLimbs()
     {
         //if (_isLerping) 
@@ -418,6 +433,7 @@ public class PlayerClimbing : MonoBehaviour
 
 
     }
+
     private void CastRayForLimb(Transform origin, float addedHeight, Transform limbForwardTran, out Vector3 hitpoint, out float currentHitDistance, out Vector3 hitNormal, out bool gotCastHit)
     {
         Vector3 startRay = origin.position - limbForwardTran.up * addedHeight;

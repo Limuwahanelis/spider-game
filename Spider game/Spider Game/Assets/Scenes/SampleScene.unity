@@ -2772,7 +2772,7 @@ MonoBehaviour:
   _playerCamera: {fileID: 0}
   _climbingMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   _playerRig: {fileID: 1123424160}
   _player: {fileID: 1004860830}
   _spineTarget: {fileID: 0}
@@ -2836,7 +2836,7 @@ MonoBehaviour:
   - {fileID: 19428796}
   - {fileID: 1313055505}
   - {fileID: 1812473643}
-  _lerpSpeed: 7
+  _lerpSpeed: 11
   _safeZoneRaycastOrigins:
   - {fileID: 524916733}
   - {fileID: 524916728}
@@ -3515,7 +3515,7 @@ GameObject:
   - component: {fileID: 1513690328}
   - component: {fileID: 1513690327}
   - component: {fileID: 1513690326}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3676,7 +3676,7 @@ GameObject:
   - component: {fileID: 1528264429}
   - component: {fileID: 1528264428}
   - component: {fileID: 1528264427}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3762,13 +3762,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1528264426}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.1979938, y: -14.83, z: 14.37}
+  m_LocalRotation: {x: -0.32664037, y: -0.0012372836, z: -0.00042760157, w: 0.9451479}
+  m_LocalPosition: {x: 3.19, y: -12.44, z: 17.92}
   m_LocalScale: {x: 12.85, y: 1, z: 8.99}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -38.13, y: -0.15, z: 0}
 --- !u!1 &1635664896
 GameObject:
   m_ObjectHideFlags: 0
