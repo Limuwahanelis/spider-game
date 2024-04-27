@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class PlayerContext
 {
+    public LimbStepperManager limbStepperManager;
     public PlayerClimbing climbing;
     public Animator anim;
     public Action<PlayerState> ChangePlayerState;

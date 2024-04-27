@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] PlayerClimbing _playerClimbing;
     [SerializeField] Animator _anim;
+    [SerializeField] LimbStepperManager _limbStepperManager;
 
     private PlayerState _currentPlayerState;
     private PlayerContext _context;
@@ -26,6 +27,7 @@ public class PlayerController : MonoBehaviour
         _context = new PlayerContext
         {
             climbing = _playerClimbing,
+            limbStepperManager = _limbStepperManager,
             ChangePlayerState = ChangeState,
             anim = _anim,
         };

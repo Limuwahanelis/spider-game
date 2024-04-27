@@ -17,7 +17,7 @@ public class WalkingPlayerState : PlayerState
     }
     public override void FixedUpdate()
     {
-        _context.climbing.SetUpLimbs();
+        _context.limbStepperManager.SetUpLimbs();
         _context.climbing.RotateBody();
     }
     public override void Move(Vector2 direction)
