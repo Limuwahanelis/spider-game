@@ -8,6 +8,7 @@ public class MyHingeJoint : MonoBehaviour
 {
 
     [SerializeField] Vector3 _rotationAxisLocal;
+    private Vector3 _globalRot;
     [SerializeField,Range(-180,180)] float _startOrientation;
     [SerializeField, Range(-90, 90)] float _minAngle;
     [SerializeField, Range(-90, 90)] float _maxAngle;
@@ -27,8 +28,13 @@ public class MyHingeJoint : MonoBehaviour
 
         _currentAngle += angle;
     }
+    private void Awake()
+    {
+        _globalRot = transform.TransformDirection(_rotationAxisLocal);
+    }
     public Vector3 GetGlobalRotationAxis()
     {
+        //Debug.Log(transform.TransformDirection(_rotationAxisLocal));
         return transform.TransformDirection(_rotationAxisLocal);
     }
 
@@ -36,7 +42,7 @@ public class MyHingeJoint : MonoBehaviour
     private Vector3 GetGlobalPerpendicularRotationAxis()
     {
         _angleHelper = new GameObject().transform;
-        _angleHelper.forward = _rotationAxisLocal;
+        _angleHelper.forward = GetGlobalRotationAxis();
         Vector3 toRet = _angleHelper.up;
         DestroyImmediate(_angleHelper.gameObject);
         return transform.TransformDirection(toRet);
@@ -53,13 +59,12 @@ public class MyHingeJoint : MonoBehaviour
         if (!UnityEditor.Selection.Contains(transform.gameObject)) return;
 
 
-
         Vector3 rotationAxis = GetGlobalRotationAxis();
         Vector3 minOrientation = GetGlobalMinRotationAxis();
 
         //RotAxis
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, transform.position+  rotationAxis);
+        Gizmos.DrawLine(transform.position, transform.position+ rotationAxis);
 
         // Rotation Limit Arc
         UnityEditor.Handles.color = Color.yellow;
