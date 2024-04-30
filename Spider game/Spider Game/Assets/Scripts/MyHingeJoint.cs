@@ -37,7 +37,7 @@ public class MyHingeJoint : MonoBehaviour
     }
     public Vector3 GetGlobalRotationAxis()
     {
-        Debug.Log(transform.TransformDirection(_rotationAxisLocal));
+        //Debug.Log(transform.TransformDirection(_rotationAxisLocal));
         return transform.TransformDirection(_rotationAxisLocal);
     }
 

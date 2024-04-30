@@ -68,15 +68,16 @@ public static class CCDIKSolver
             {
                 var handle = chain[k];
                 float currentAngle = jointsCurrentAngle[k];
-                SolveCCDIKStep(stream, handle, endEffector, target, jointsAxis[k], ref currentAngle, jointsMinAngle[k], jointsMaxAngle[k]);
+                SolveCCDIKStep(stream,ref handle, endEffector, target, jointsAxis[k], ref currentAngle, jointsMinAngle[k], jointsMaxAngle[k]);
                 jointsCurrentAngle[k] = currentAngle;
                 i--;
                 k = i;
             }
             iterations++;
         }
+        Debug.Log(jointsCurrentAngle[0]);
     }
-    public static void SolveCCDIKStep(AnimationStream stream, ReadWriteTransformHandle joint, ReadWriteTransformHandle endEffector, ReadWriteTransformHandle target,Vector3 rotationAxis ,ref float totalAngle, float minAngle, float maxAngle)
+    public static void SolveCCDIKStep(AnimationStream stream,ref ReadWriteTransformHandle joint, ReadWriteTransformHandle endEffector, ReadWriteTransformHandle target,Vector3 rotationAxis ,ref float totalAngle, float minAngle, float maxAngle)
     {
         //Vector3 rotationAxis = joint.GetComponent<MyHingeJoint>().GetGlobalRotationAxis();
 
@@ -87,15 +88,15 @@ public static class CCDIKSolver
         Vector3 toEffectorProjected = Vector3.ProjectOnPlane(directionToEffector, rotationAxis);
         Vector3 toTargetProjected = Vector3.ProjectOnPlane(directionToGoal, rotationAxis);
 
-        //Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + toEffectorProjected, Color.gray);
-        //Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + toTargetProjected, Color.green);
+        Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + toEffectorProjected, Color.gray);
+        Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + toTargetProjected, Color.green);
 
-        //Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + directionToEffector, Color.red);
-        //Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + directionToGoal);
+        Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + directionToEffector, Color.red);
+        Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + directionToGoal);
 
         if (directionToGoal == Vector3.zero || directionToEffector == Vector3.zero) return;
         float angle = Vector3.SignedAngle(toEffectorProjected, toTargetProjected, rotationAxis);
-        //angle = Mathf.Clamp(totalAngle + angle, minAngle, maxAngle) - totalAngle;
+        angle = Mathf.Clamp(totalAngle + angle, minAngle, maxAngle) - totalAngle;
         Quaternion aa = Quaternion.AngleAxis(angle,rotationAxis);
 
         Vector3 pos = joint.GetPosition(stream);
@@ -109,7 +110,7 @@ public static class CCDIKSolver
         joint.SetRotation(stream,joint.GetRotation(stream)* Quaternion.Inverse(myRot) * rot * myRot);
         //joint.RotateAround(joint.GetPosition(stream), rotationAxis, angle);
         totalAngle += angle;
-
+        
     }
     private static int mod(int n, int m)
     {

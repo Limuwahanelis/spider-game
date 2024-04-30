@@ -12,6 +12,10 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     [SerializeField] Transform _root;
     [SerializeField] Transform _tip;
 
+    [SerializeField] List<MyHingeJoint> _joints;
+
+    [SyncSceneToStream, SerializeField] float hh;
+
 
     [SyncSceneToStream, SerializeField] Transform _target;
 
@@ -21,7 +25,7 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     [NotKeyable, SerializeField, Range(1, 50)] int _maxIterations;
     [NotKeyable, SerializeField, Range(0, 0.01f)] float _tolerance;
 
-    public Transform Root { get=>_root; set=>_root = value; }
+    public Transform Root { get => _root; set => _root = value; }
 
     public Transform Tip { get => _tip; set => _tip = value; }
 
@@ -31,6 +35,8 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     public int MaxIterations { get => _maxIterations; set => _maxIterations = value; }
 
     public float Tolerance { get => _tolerance; set => _tolerance = value; }
+
+    public List<MyHingeJoint> joints { get => _joints; set => _joints = value; }
 
     bool IAnimationJobData.IsValid()
     {
