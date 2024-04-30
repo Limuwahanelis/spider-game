@@ -6,9 +6,12 @@ using UnityEngine.UIElements;
 
 public class MyHingeJoint : MonoBehaviour
 {
-
+    public float StartingAngle=>_startingAngle;
+    public float MinAngle=>_minAngle;
+    public float MaxAngle=>_maxAngle;
+    public Vector3 RotationAxisGlobal { get => transform.TransformDirection(_rotationAxisLocal); }
     [SerializeField] Vector3 _rotationAxisLocal;
-    private Vector3 _globalRot;
+    [SerializeField] float _startingAngle;
     [SerializeField,Range(-180,180)] float _startOrientation;
     [SerializeField, Range(-90, 90)] float _minAngle;
     [SerializeField, Range(-90, 90)] float _maxAngle;
@@ -30,11 +33,11 @@ public class MyHingeJoint : MonoBehaviour
     }
     private void Awake()
     {
-        _globalRot = transform.TransformDirection(_rotationAxisLocal);
+        //_globalRot = transform.TransformDirection(_rotationAxisLocal);
     }
     public Vector3 GetGlobalRotationAxis()
     {
-        //Debug.Log(transform.TransformDirection(_rotationAxisLocal));
+        Debug.Log(transform.TransformDirection(_rotationAxisLocal));
         return transform.TransformDirection(_rotationAxisLocal);
     }
 

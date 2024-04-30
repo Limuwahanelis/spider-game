@@ -12,6 +12,7 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     [SerializeField] Transform _root;
     [SerializeField] Transform _tip;
 
+
     [SyncSceneToStream, SerializeField] Transform _target;
 
     [SyncSceneToStream, SerializeField, Range(0f, 1f)] float _chainRotationWeight;
@@ -63,8 +64,5 @@ public class ChainCCDIKConstraint : RigConstraint<
     ChainCCDIKData,
     ChainCCDIKConstraintJobBinder<ChainCCDIKData>>
 {
-    private void OnValidate()
-    {
-        
-    }
+
 }
