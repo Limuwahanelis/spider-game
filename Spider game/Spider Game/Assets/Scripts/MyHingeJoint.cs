@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
+# if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -40,8 +43,28 @@ public class MyHingeJoint : MonoBehaviour
         //Debug.Log(transform.TransformDirection(_rotationAxisLocal));
         return transform.TransformDirection(_rotationAxisLocal);
     }
-
+    public void RotateAroundAxis(float angle)
+    {
+        transform.RotateAround(transform.position, GetGlobalRotationAxis(), angle);
+    }
 #if UNITY_EDITOR
+    [CustomEditor(typeof(MyHingeJoint))]
+    public class MyHingeEditor:Editor
+    {
+        private MyHingeJoint _hinge;
+        private void OnEnable()
+        {
+            _hinge = target as MyHingeJoint;
+        }
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            serializedObject.Update();
+            if(GUILayout.Button("Rotate right 5 degree")) _hinge.RotateAroundAxis(5f);
+            if (GUILayout.Button("Rotate left 5 degree")) _hinge.RotateAroundAxis(-5f);
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
     private Vector3 GetGlobalPerpendicularRotationAxis()
     {
         _angleHelper = new GameObject().transform;
