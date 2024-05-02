@@ -10,11 +10,16 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 
 
     [SerializeField] Transform _root;
-    [SerializeField] Transform _tip;
+    [SyncSceneToStream,SerializeField] Transform _tip;
 
     [SerializeField] List<MyHingeJoint> _joints;
 
     [SyncSceneToStream, SerializeField] float hh;
+    [SyncSceneToStream, SerializeField] float AngleToRot;
+    [SyncSceneToStream,SerializeField] Vector3 anglesToRotate;
+
+    [SyncSceneToStream, SerializeField] int hingesToUpdate;
+    [SyncSceneToStream, SerializeField] int startingHingeIndex;
 
 
     [SyncSceneToStream, SerializeField] Transform _target;
@@ -37,6 +42,8 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     public float Tolerance { get => _tolerance; set => _tolerance = value; }
 
     public List<MyHingeJoint> joints { get => _joints; set => _joints = value; }
+
+    public Vector3 Angles  { get => anglesToRotate; set => anglesToRotate = value; }
 
     bool IAnimationJobData.IsValid()
     {
@@ -70,5 +77,18 @@ public class ChainCCDIKConstraint : RigConstraint<
     ChainCCDIKData,
     ChainCCDIKConstraintJobBinder<ChainCCDIKData>>
 {
-
+    protected override void OnValidate()
+    {
+        base.OnValidate();
+        if(data.joints == null) data.joints = new List<MyHingeJoint>();
+        if( data.joints.Count == 0)
+        {
+            data.joints.Clear();
+            Transform[] chain = ConstraintsUtils.ExtractChain(data.Root, data.Tip);
+            for (int i=0;i<chain.Length;i++)
+            {
+                data.joints.Add(chain[i].GetComponent<MyHingeJoint>());
+            }
+        }
+    }
 }
