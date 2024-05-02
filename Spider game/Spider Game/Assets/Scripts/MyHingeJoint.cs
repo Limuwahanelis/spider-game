@@ -18,7 +18,9 @@ public class MyHingeJoint : MonoBehaviour
     [SerializeField,Range(-180,180)] float _startOrientation;
     [SerializeField, Range(-90, 90)] float _minAngle;
     [SerializeField, Range(-90, 90)] float _maxAngle;
-
+    private Vector3 _startLocalOrientation;
+    private Vector3 _perpendicularAxisLocal;
+    private Vector3 _minOrientationLocal;
     private float _currentAngle;
     private Transform _angleHelper;
     public void ApplyRotation(float angle)
@@ -36,8 +38,10 @@ public class MyHingeJoint : MonoBehaviour
     }
     private void Awake()
     {
+        SetUp();
         //_globalRot = transform.TransformDirection(_rotationAxisLocal);
     }
+
     public Vector3 GetGlobalRotationAxis()
     {
         //Debug.Log(transform.TransformDirection(_rotationAxisLocal));
@@ -46,6 +50,15 @@ public class MyHingeJoint : MonoBehaviour
     public void RotateAroundAxis(float angle)
     {
         transform.RotateAround(transform.position, GetGlobalRotationAxis(), angle);
+    }
+    public void SetUp()
+    {
+        Vector3 up;
+        up = transform.up;
+        _perpendicularAxisLocal = Quaternion.Euler(_rotationAxisLocal) * transform.InverseTransformDirection(up);
+        _startLocalOrientation = Quaternion.AngleAxis(_startOrientation, _rotationAxisLocal) * _perpendicularAxisLocal;
+        _minOrientationLocal = Quaternion.AngleAxis(_minAngle - _currentAngle, _rotationAxisLocal) * _startLocalOrientation;
+
     }
 #if UNITY_EDITOR
     [CustomEditor(typeof(MyHingeJoint))]
@@ -65,26 +78,21 @@ public class MyHingeJoint : MonoBehaviour
             serializedObject.ApplyModifiedProperties();
         }
     }
+
     private Vector3 GetGlobalPerpendicularRotationAxis()
     {
-        _angleHelper = new GameObject().transform;
-        _angleHelper.forward = GetGlobalRotationAxis();
-        Vector3 toRet = _angleHelper.up;
-        DestroyImmediate(_angleHelper.gameObject);
-        return transform.TransformDirection(toRet);
+        return transform.TransformDirection(_perpendicularAxisLocal);
     }
     private Vector3 GetGlobalMinRotationAxis()
     {
-        Vector3 toReturn = GetGlobalPerpendicularRotationAxis();
-        toReturn = Quaternion.AngleAxis(_minAngle-_currentAngle, GetGlobalRotationAxis()) * toReturn;
-        return toReturn;
+        return transform.TransformDirection(_minOrientationLocal);
     }
     void OnDrawGizmosSelected()
     {
 
         if (!UnityEditor.Selection.Contains(transform.gameObject)) return;
 
-
+        SetUp();
         Vector3 rotationAxis = GetGlobalRotationAxis();
         Vector3 minOrientation = GetGlobalMinRotationAxis();
 
@@ -93,12 +101,12 @@ public class MyHingeJoint : MonoBehaviour
         Gizmos.DrawLine(transform.position, transform.position+ rotationAxis);
 
         // Rotation Limit Arc
-        UnityEditor.Handles.color = Color.yellow;
-        UnityEditor.Handles.DrawSolidArc(transform.position, rotationAxis, minOrientation, _maxAngle - _minAngle,0.3f);
+        Handles.color = Color.yellow;
+        Handles.DrawSolidArc(transform.position, rotationAxis, minOrientation, _maxAngle - _minAngle,0.3f);
 
         // Current Rotation Used Arc
-        UnityEditor.Handles.color = Color.red;
-        UnityEditor.Handles.DrawSolidArc(transform.position, rotationAxis, minOrientation, _currentAngle - _minAngle, 0.1f);
+        Handles.color = Color.red;
+        Handles.DrawSolidArc(transform.position, rotationAxis, minOrientation, _currentAngle - _minAngle, 0.1f);
     }
 
 #endif
