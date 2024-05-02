@@ -14,9 +14,6 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 
     [SerializeField] List<MyHingeJoint> _joints;
 
-    [SyncSceneToStream, SerializeField] int hingesToUpdate;
-    [SyncSceneToStream, SerializeField] int startingHingeIndex;
-
 
     [SyncSceneToStream, SerializeField] Transform _target;
 
@@ -79,7 +76,7 @@ public class ChainCCDIKConstraint : RigConstraint<
         {
             data.joints.Clear();
             Transform[] chain = ConstraintsUtils.ExtractChain(data.Root, data.Tip);
-            for (int i=0;i<chain.Length;i++)
+            for (int i=0;i<chain.Length-1;i++)
             {
                 data.joints.Add(chain[i].GetComponent<MyHingeJoint>());
             }
