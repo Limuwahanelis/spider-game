@@ -14,10 +14,6 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 
     [SerializeField] List<MyHingeJoint> _joints;
 
-    [SyncSceneToStream, SerializeField] float hh;
-    [SyncSceneToStream, SerializeField] float AngleToRot;
-    [SyncSceneToStream,SerializeField] Vector3 anglesToRotate;
-
     [SyncSceneToStream, SerializeField] int hingesToUpdate;
     [SyncSceneToStream, SerializeField] int startingHingeIndex;
 
@@ -42,8 +38,6 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     public float Tolerance { get => _tolerance; set => _tolerance = value; }
 
     public List<MyHingeJoint> joints { get => _joints; set => _joints = value; }
-
-    public Vector3 Angles  { get => anglesToRotate; set => anglesToRotate = value; }
 
     bool IAnimationJobData.IsValid()
     {

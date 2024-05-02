@@ -13,15 +13,9 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
     public NativeArray<float> jointsCurrentAngle;
     public NativeArray<float> jointsMinAngle;
     public NativeArray<float> jointsMaxAngle;
-    public FloatProperty gg;
-    public FloatProperty hh;
-    public FloatProperty angle;
     public int index;
     /// <summary>An array of Transform handles that represents the Transform chain.</summary>
     public NativeArray<ReadWriteTransformHandle> chain;
-
-    /// <summary>An array of positions for Transforms in the chain.</summary>
-    public NativeArray<Vector3> linkPositions;
 
     /// <summary>The Transform handle for the target Transform.</summary>
     public ReadWriteTransformHandle target;
@@ -29,18 +23,7 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
     /// <summary> Tip of the chain which is used to determine distance from target </summary>
     public ReadWriteTransformHandle endEffector;
 
-    /// <summary>The offset applied to the target transform if maintainTargetPositionOffset or maintainTargetRotationOffset is enabled.</summary>
-    public AffineTransform targetOffset;
-
-    /// <summary>An array of length in between Transforms in the chain.</summary>
-    public NativeArray<float> linkLengths;
-
     public NativeArray<Quaternion> chainRotations;
-
-    /// <summary>An array of length in between Transforms in the chain.</summary>
-    public Vector3Property angles;
-
-    public IntProperty numberOfhingesToUpdate;
 
     /// <summary>CacheIndex to ChainIK tolerance value.</summary>
     /// <seealso cref="AnimationJobCache"/>
@@ -123,8 +106,6 @@ public interface IChainCCDIKConstraintData
     /// <summary>The ChainCCDIK target Transform.</summary>
     Transform Target { get; }
 
-    Vector3 Angles { get; }
-
     /// <summary>The maximum number of iterations allowed for the ChainCCDIK algorithm to converge to a solution.</summary>
     int MaxIterations { get; }
     /// <summary>
@@ -143,34 +124,25 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
     public override ChainCCDIKConstraintJob Create(Animator animator, ref T data, Component component)
     {
         Transform[] chain = ConstraintsUtils.ExtractChain(data.Root, data.Tip);
-        //data.joints = new List<MyHingeJoint>();
         
         ChainCCDIKConstraintJob job = new ChainCCDIKConstraintJob();
         job.chain = new NativeArray<ReadWriteTransformHandle>(chain.Length-1, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         job.jointsAxis = new NativeArray<Vector3>(chain.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        job.jointsMinAngle = new NativeArray<float>(chain.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        job.jointsMaxAngle = new NativeArray<float>(chain.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        job.jointsMaxAngle = new NativeArray<float>(chain.Length-1, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        job.jointsMinAngle = new NativeArray<float>(chain.Length-1, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         job.jointsCurrentAngle = new NativeArray<float>(chain.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        job.angle = FloatProperty.Bind(animator, component, "m_Data.AngleToRot");
         job.target = ReadWriteTransformHandle.Bind(animator, data.Target);
         job.endEffector = ReadWriteTransformHandle.Bind(animator, chain[chain.Length-1]);
-        job.linkPositions = new NativeArray<Vector3>(chain.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        job.angles = Vector3Property.Bind(animator, component, "m_Data.anglesToRotate");
         job.chainRotations =new NativeArray<Quaternion>(chain.Length-1,Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        job.hh = FloatProperty.Bind(animator, component, "m_Data.hh");
         for (int i = 0; i < job.chain.Length; i++)
         {
             MyHingeJoint joint = chain[i].GetComponent<MyHingeJoint>();
-            //job.gg = FloatProperty.Bind(animator, joint, "MaxAngle");
-            //data.joints.Add(joint);
-            string objectName = joint.name;
             job.chain[i] = ReadWriteTransformHandle.Bind(animator, chain[i]);
             job.jointsAxis[i] = chain[i].GetComponent<MyHingeJoint>().GetGlobalRotationAxis();//Vector3Property.Bind(animator, data.joints[i], "RotationAxisGlobal");  
             job.jointsMaxAngle[i] = chain[i].GetComponent<MyHingeJoint>().MaxAngle;
             job.jointsMinAngle[i] = chain[i].GetComponent<MyHingeJoint>().MinAngle;
-            job.jointsCurrentAngle[i] = job.jointsMaxAngle[i] = chain[i].GetComponent<MyHingeJoint>().StartingAngle;
+            job.jointsCurrentAngle[i]  = chain[i].GetComponent<MyHingeJoint>().StartingAngle;
             job.chainRotations[i] = joint.transform.rotation;
-            //job.joints[i] = animator.BindStreamProperty(chain[i], typeof(MyHingeJoint),);
         }
         job.index = 0;
         var cacheBuilder = new AnimationJobCacheBuilder();
@@ -198,6 +170,7 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.jointsMaxAngle.Dispose();
         job.jointsMinAngle.Dispose();
         job.jointsCurrentAngle.Dispose();
+        job.chainRotations.Dispose();
         job.cache.Dispose();
     }
 }
