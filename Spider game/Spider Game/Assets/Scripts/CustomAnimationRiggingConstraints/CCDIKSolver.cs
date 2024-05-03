@@ -67,7 +67,7 @@ public static class CCDIKSolver
         while (iterations <= maxIterations && distance > tolerance)
         {
             int k = 0;
-            for (int i = chain.Length - 1; i > 0;)
+            for (int i = chain.Length; i > 0;)
             {
                 var handle = chain[k];
                 float currentAngle = jointsCurrentAngle[k];
@@ -76,9 +76,11 @@ public static class CCDIKSolver
                 i--;
                 k = i;
             }
+            distance = Vector3.Distance(endEffector.GetPosition(stream), target.GetPosition(stream));
             iterations++;
         }
-        if (iterations == maxIterations && distance > tolerance) return false;
+        
+        if (iterations >= maxIterations && distance > tolerance) return false;
         return true;
     }
     public static void SolveCCDIKStep(ref AnimationStream stream,ref ReadWriteTransformHandle joint, ReadWriteTransformHandle endEffector, ReadOnlyTransformHandle target,Vector3 rotationAxis ,ref float totalAngle, float minAngle, float maxAngle,bool debug)
