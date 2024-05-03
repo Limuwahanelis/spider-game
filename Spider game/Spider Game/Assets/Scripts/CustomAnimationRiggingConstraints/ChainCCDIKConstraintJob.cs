@@ -8,7 +8,7 @@ using UnityEngine.Animations.Rigging;
 
 public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
 {
-    public Action<ChainCCDIKConstraintJob> OnNewTargetRequired;
+    public Action OnNewTargetRequired;
     public Action<ChainCCDIKConstraintJob> OnJobEnded;
     public FloatProperty jobWeight { get; set; }
 
@@ -56,7 +56,7 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
                 chainRotations[i] = chain[i].GetRotation(stream);
             }
             aa++;
-            if (aa > 20) OnNewTargetRequired?.Invoke(this);
+            if (aa > 20) OnNewTargetRequired?.Invoke();
         }
         else 
         {
