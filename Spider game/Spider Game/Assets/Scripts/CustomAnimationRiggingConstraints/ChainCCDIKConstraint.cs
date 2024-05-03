@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,7 @@ using static UnityEngine.GraphicsBuffer;
 public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 {
 
-
+    [SerializeField] LimbStepperManager man;
     [SerializeField] Transform _root;
     [SyncSceneToStream,SerializeField] Transform _tip;
 
@@ -16,6 +17,8 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 
 
     [SyncSceneToStream, SerializeField] Transform _target;
+
+    [SyncSceneToStream, SerializeField] bool update;
 
     [SyncSceneToStream, SerializeField, Range(0f, 1f)] float _chainRotationWeight;
     [SyncSceneToStream, SerializeField, Range(0f, 1f)] float _tipRotationWeight;
@@ -35,6 +38,16 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     public float Tolerance { get => _tolerance; set => _tolerance = value; }
 
     public List<MyHingeJoint> joints { get => _joints; set => _joints = value; }
+
+    public LimbStepperManager Man { get => man; set => man = value; }
+
+
+    public event IChainCCDIKConstraintData.NewTargetEventHandler OnNewTargetRequired;
+
+    public void FireEvent()
+    {
+        OnNewTargetRequired?.Invoke();
+    }
 
     bool IAnimationJobData.IsValid()
     {

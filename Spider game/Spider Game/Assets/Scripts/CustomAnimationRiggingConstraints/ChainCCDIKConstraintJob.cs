@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -7,6 +8,8 @@ using UnityEngine.Animations.Rigging;
 
 public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
 {
+    public Action<ChainCCDIKConstraintJob> OnNewTargetRequired;
+    public Action<ChainCCDIKConstraintJob> OnJobEnded;
     public FloatProperty jobWeight { get; set; }
 
     public NativeArray<Vector3> jointsAxis;
@@ -52,6 +55,8 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
             {
                 chainRotations[i] = chain[i].GetRotation(stream);
             }
+            aa++;
+            if (aa > 20) OnNewTargetRequired?.Invoke(this);
         }
         else 
         {
@@ -65,6 +70,11 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
 }
 public interface IChainCCDIKConstraintData
 {
+    public delegate void NewTargetEventHandler();
+    public event NewTargetEventHandler OnNewTargetRequired;
+
+    public LimbStepperManager Man { get; }
+    public void FireEvent();
     /// <summary>The root Transform of the ChainCCDIK hierarchy.</summary>
     Transform Root { get; }
     /// <summary>The tip Transform of the ChainCCDIK hierarchy. The tip needs to be a descendant/child of the root Transform.</summary>
@@ -87,6 +97,15 @@ public interface IChainCCDIKConstraintData
 public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKConstraintJob, T>
     where T : struct, IAnimationJobData, IChainCCDIKConstraintData
 {
+    struct EventStruct
+    {
+        IChainCCDIKConstraintData data;
+        private void FireEvent()
+        {
+            data.FireEvent();
+        }
+    }
+
     public override ChainCCDIKConstraintJob Create(Animator animator, ref T data, Component component)
     {
         Transform[] chain = ConstraintsUtils.ExtractChain(data.Root, data.Tip);
@@ -117,6 +136,8 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.maxIterationsIdx = cacheBuilder.Add(data.MaxIterations);
         job.toleranceIdx = cacheBuilder.Add(data.Tolerance);
         job.cache = cacheBuilder.Build();
+        data.Man.SubscribeToJobEvent(ref job);
+        job.OnJobEnded += data.Man.UnsubscribeFromJobEvent;
         return job;
     }
 
@@ -140,5 +161,6 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.jointsCurrentAngle.Dispose();
         job.chainRotations.Dispose();
         job.cache.Dispose();
+        job.OnJobEnded?.Invoke(job);
     }
 }
