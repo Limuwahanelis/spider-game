@@ -8,7 +8,7 @@ using static UnityEngine.GraphicsBuffer;
 [System.Serializable]
 public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 {
-
+    [SerializeField] bool _debugLimb;
     [SerializeField] LimbStepperManager man;
     [SerializeField] Transform _root;
     [SyncSceneToStream,SerializeField] Transform _tip;
@@ -41,6 +41,7 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 
     public LimbStepperManager Man { get => man; set => man = value; }
 
+    public bool Debug { get => _debugLimb; set => _debugLimb = value; }
 
     public event IChainCCDIKConstraintData.NewTargetEventHandler OnNewTargetRequired;
 
@@ -88,10 +89,13 @@ public class ChainCCDIKConstraint : RigConstraint<
         if( data.joints.Count == 0)
         {
             data.joints.Clear();
-            Transform[] chain = ConstraintsUtils.ExtractChain(data.Root, data.Tip);
-            for (int i=0;i<chain.Length-1;i++)
+            if (data.Tip != null && data.Root != null)
             {
-                data.joints.Add(chain[i].GetComponent<MyHingeJoint>());
+                Transform[] chain = ConstraintsUtils.ExtractChain(data.Root, data.Tip);
+                for (int i = 0; i < chain.Length - 1; i++)
+                {
+                    data.joints.Add(chain[i].GetComponent<MyHingeJoint>());
+                }
             }
         }
     }

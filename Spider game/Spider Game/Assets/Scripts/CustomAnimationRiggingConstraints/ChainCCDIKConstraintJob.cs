@@ -28,7 +28,8 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
 
     public NativeArray<Quaternion> chainRotations;
 
-    public BoolProperty needsNewTarget;
+    public bool needsNewTarget;
+    public bool debug;
     public int aa;
     /// <summary>CacheIndex to ChainIK tolerance value.</summary>
     /// <seealso cref="AnimationJobCache"/>
@@ -45,34 +46,38 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
         float w = jobWeight.Get(stream);
         if (w > 0f)
         {
-            for(int i=0;i<chain.Length;i++)
+            for (int i = 0; i < chain.Length; i++)
             {
                 chain[i].SetRotation(stream, chainRotations[i]);
             }
-            if (needsNewTarget.Get(stream)) return;
-            if (!CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle)) needsNewTarget.Set(stream, true);
-            for(int i=0;i<chainRotations.Length;i++)
+
+            if (debug) CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle);
+            else
+            {
+                if (!CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle))
+                {
+                    OnNewTargetRequired?.Invoke();
+                }
+            }
+            for (int i = 0; i < chainRotations.Length; i++)
             {
                 chainRotations[i] = chain[i].GetRotation(stream);
             }
-            aa++;
-            if (aa > 20) OnNewTargetRequired?.Invoke();
         }
-        else 
+        else
         {
             for (int i = 0; i < chain.Length; ++i)
                 AnimationRuntimeUtils.PassThrough(stream, chain[i]);
-           // AnimationRuntimeUtils.PassThrough(stream, target);
+            // AnimationRuntimeUtils.PassThrough(stream, target);
         }
     }
-
-
 }
 public interface IChainCCDIKConstraintData
 {
     public delegate void NewTargetEventHandler();
     public event NewTargetEventHandler OnNewTargetRequired;
 
+    public bool Debug {  get; }
     public LimbStepperManager Man { get; }
     public void FireEvent();
     /// <summary>The root Transform of the ChainCCDIK hierarchy.</summary>
@@ -97,14 +102,6 @@ public interface IChainCCDIKConstraintData
 public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKConstraintJob, T>
     where T : struct, IAnimationJobData, IChainCCDIKConstraintData
 {
-    struct EventStruct
-    {
-        IChainCCDIKConstraintData data;
-        private void FireEvent()
-        {
-            data.FireEvent();
-        }
-    }
 
     public override ChainCCDIKConstraintJob Create(Animator animator, ref T data, Component component)
     {
@@ -119,7 +116,7 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.target = ReadOnlyTransformHandle.Bind(animator, data.Target);
         job.endEffector = ReadWriteTransformHandle.Bind(animator, chain[chain.Length-1]);
         job.chainRotations =new NativeArray<Quaternion>(chain.Length-1,Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        job.needsNewTarget = BoolProperty.Bind(animator, component, "m_Data.update");
+        job.needsNewTarget = false;
         for (int i = 0; i < job.chain.Length; i++)
         {
             MyHingeJoint joint = chain[i].GetComponent<MyHingeJoint>();
@@ -136,6 +133,7 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.maxIterationsIdx = cacheBuilder.Add(data.MaxIterations);
         job.toleranceIdx = cacheBuilder.Add(data.Tolerance);
         job.cache = cacheBuilder.Build();
+        job.debug = data.Debug;
         data.Man.SubscribeToJobEvent(ref job);
         job.OnJobEnded += data.Man.UnsubscribeFromJobEvent;
         return job;
