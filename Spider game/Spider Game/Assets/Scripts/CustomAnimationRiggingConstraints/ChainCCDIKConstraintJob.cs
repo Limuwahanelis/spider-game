@@ -8,7 +8,7 @@ using UnityEngine.Animations.Rigging;
 
 public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
 {
-    public Action OnNewTargetRequired;
+    public Action<int> OnNewTargetRequired;
     public Action<ChainCCDIKConstraintJob> OnJobEnded;
     public FloatProperty jobWeight { get; set; }
 
@@ -56,7 +56,7 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
             {
                 if (!CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle))
                 {
-                    OnNewTargetRequired?.Invoke();
+                    OnNewTargetRequired?.Invoke(index);
                 }
             }
             for (int i = 0; i < chainRotations.Length; i++)
@@ -78,6 +78,8 @@ public interface IChainCCDIKConstraintData
     public event NewTargetEventHandler OnNewTargetRequired;
 
     public bool Debug {  get; }
+    /// <summary>Index which is used to associated constraint with limb in LimbStepperManager  /// </summary>
+    public int ConstraintIndex { get; }
     public LimbStepperManager Man { get; }
     public void FireEvent();
     /// <summary>The root Transform of the ChainCCDIK hierarchy.</summary>
@@ -127,8 +129,7 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
             job.jointsCurrentAngle[i]  = chain[i].GetComponent<MyHingeJoint>().StartingAngle;
             job.chainRotations[i] = joint.transform.rotation;
         }
-        job.index = 0;
-        job.aa = 0;
+        job.index = data.ConstraintIndex;
         var cacheBuilder = new AnimationJobCacheBuilder();
         job.maxIterationsIdx = cacheBuilder.Add(data.MaxIterations);
         job.toleranceIdx = cacheBuilder.Add(data.Tolerance);

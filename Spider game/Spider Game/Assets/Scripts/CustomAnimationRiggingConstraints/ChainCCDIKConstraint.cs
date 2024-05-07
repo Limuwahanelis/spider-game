@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Animations.Rigging;
-using static UnityEngine.GraphicsBuffer;
 [System.Serializable]
 public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
 {
+    [SerializeField] int _constraintIndex;
     [SerializeField] bool _debugLimb;
     [SerializeField] LimbStepperManager man;
     [SerializeField] Transform _root;
@@ -42,6 +42,9 @@ public struct ChainCCDIKData : IAnimationJobData, IChainCCDIKConstraintData
     public LimbStepperManager Man { get => man; set => man = value; }
 
     public bool Debug { get => _debugLimb; set => _debugLimb = value; }
+
+    public int ConstraintIndex { get => _constraintIndex; set =>_constraintIndex = value; }
+
 
     public event IChainCCDIKConstraintData.NewTargetEventHandler OnNewTargetRequired;
 
