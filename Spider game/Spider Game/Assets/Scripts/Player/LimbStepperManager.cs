@@ -1,13 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class LimbStepperManager : MonoBehaviour
 {
+    public float AvgHeightDifference=>_avgHeightDifference;
+    public float HeightToAngleRatio => _heightToAngleRatio;
     public Vector3 avgNormals;
     [SerializeField] LayerMask _climbingMask;
     [SerializeField] LimbStepper[] _steppers = new LimbStepper[8];
     [SerializeField] float _checkDistance;
+    [SerializeField] float _heightToAngleRatio;
+    private float _avgHeightDifference;
     private void Start()
     {
        
@@ -16,28 +21,33 @@ public class LimbStepperManager : MonoBehaviour
     {
         
     }
-    private void DD()
+    private void DD(int limbIndex)
     {
-        Debug.Log("Need new target");
-        SetFutherestLimb();
+        MoveLimb(limbIndex);
     }
     public void SetUpLimbs()
     {
-       // MoveLimbs();
         Vector3 avgNormal = Vector3.zero;
         for (int i = 0; i < _steppers.Length; i++)
         {
             avgNormal += _steppers[i].LimbNormal;
         }
         avgNormal = avgNormal / _steppers.Length;
-        //Debug.Log(avgNormal);
         avgNormals = avgNormal;
-
+        _avgHeightDifference = 0;
+        Vector3 tmp;
+        for (int i = 0; i < _steppers.Length; i++)
+        {
+            //tmp=Vector3.ProjectOnPlane(_steppers[i].LimbTip.position - transform.position, transform.up);
+            tmp = transform.rotation * (_steppers[i].LimbTip.position - transform.position);
+            _avgHeightDifference +=(_steppers[i].IsFrontLeg?-1:1)* tmp.y;
+        }
+        _avgHeightDifference = _avgHeightDifference / _steppers.Length;
     }
-    private void SetFutherestLimb()
+    private void MoveLimb(int index)
     {
-        if (_steppers[0].IsLerping) return;
-        _steppers[0].lerp();
+        if (_steppers[index].IsLerping) return;
+        _steppers[index].lerp();
     }
     //private void SetFutherestLimb()
     //{
@@ -66,10 +76,6 @@ public class LimbStepperManager : MonoBehaviour
     //        }
     //    }
     //}
-    private void MoveLimbs()
-    {
-        SetFutherestLimb();
-    }
     public void SubscribeToJobEvent(ref ChainCCDIKConstraintJob job)
     {
         job.OnNewTargetRequired += DD;

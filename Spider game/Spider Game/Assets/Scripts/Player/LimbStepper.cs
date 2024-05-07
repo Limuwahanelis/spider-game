@@ -17,13 +17,18 @@ public class LimbStepper : MonoBehaviour
         }
         public Ray ray;
         public float length;
-    }
 
+        public MyRay GetReverseRay()
+        {
+            return new MyRay(new Ray(ray.origin + ray.direction * length, -ray.direction), length);
+        }
+    }
+    public bool IsFrontLeg => _isFrontLeg;
+    public Transform LimbTip=>_limbTip;
     public Vector3 LimbNormal => _limbNormal;
     public float Distance=>_distance;
     public bool IsLerping=> _isLimbLerping;
     public bool ShouldLerp => _shouldLerp;
-    [SerializeField] Transform testc;
     [SerializeField] LayerMask _climbingMask;
     [SerializeField] float _checkDistance;
     [SerializeField] Transform _limbTarget;
@@ -31,6 +36,7 @@ public class LimbStepper : MonoBehaviour
     [SerializeField] Transform _limbAnchor;
     [SerializeField] Transform _mainBody;
     [SerializeField] private float _lerpSpeed;
+    [SerializeField] bool _isFrontLeg;
 
     private Vector3 _limbNormal;
     private Vector3 _futureNormal;
@@ -46,7 +52,10 @@ public class LimbStepper : MonoBehaviour
     private bool _lerp;
     private float _lerpValue;
     private bool _isFirstTimeLerping;
+    private bool _forcedWallLerp;
     private Vector3 _oldTargetPosition;
+    private Vector3 _bodyOldPosition;
+    private Vector3 _movingOffset;
     private void Awake()
     {
         Vector3 rayDirection = _limbAnchor.position - _limbTip.position;
@@ -71,7 +80,19 @@ public class LimbStepper : MonoBehaviour
         if(_lerp) 
         {
             _lerp = false;
+            _bodyOldPosition = _mainBody.position;
             MoveLimb();
+        }
+        if (_wallTran != null)
+        {
+            if (!_forcedWallLerp)
+            {
+                if (CastRayForWall(out Vector3 hitpoint))
+                {
+                    _forcedWallLerp = true;
+                    MoveLimb(_forcedWallLerp);
+                }
+            }
         }
         //_distance = Vector3.Distance(_limbAnchor.position, _limbTarget.position);
         //if (_isLimbLerping) return;
@@ -87,13 +108,14 @@ public class LimbStepper : MonoBehaviour
     {
         _lerp = true;
     }
-    public void MoveLimb()
+    public void MoveLimb(bool forced = false)
     {
-            if (!_isLimbLerping)
-            {
-            Debug.Log("ler");
-                LerpLimb();
-            }
+        if (!_isLimbLerping)
+        {
+            if (!forced)
+                if (_forcedWallLerp) _forcedWallLerp = false;
+            LerpLimb();
+        }
 
     }
     private bool CastRayForWall(out Vector3 hitpoint)
@@ -105,10 +127,17 @@ public class LimbStepper : MonoBehaviour
     }
     private Vector3 CastRaysForAnchor()
     {
-        Vector3 startRay = _limbAnchor.position;
-        MyRay[] rays = new MyRay[] {new MyRay( new Ray(_oldTargetPosition, (_limbAnchor.position - _oldTargetPosition)),8),new MyRay(new Ray(_limbTip.position,_limbAnchor.position-_limbTip.position),_checkDistance),new MyRay( new Ray(startRay, _limbAnchor.right))
-            , new MyRay( new Ray(startRay, -_limbAnchor.right)), new MyRay (new Ray(startRay, _limbAnchor.forward)), new MyRay (new Ray(startRay, -_limbAnchor.forward))
-            ,new MyRay(new Ray(startRay+_limbAnchor.up*4,startRay-startRay+_limbAnchor.up*4),12)};
+        _movingOffset = (_mainBody.position - _bodyOldPosition);
+        Vector3 startRay = _limbAnchor.position+ _movingOffset;
+        MyRay[] rays = new MyRay[] {
+            //new MyRay( new Ray(_oldTargetPosition, (_limbAnchor.position - _oldTargetPosition)),8),
+            new MyRay(new Ray(_limbTip.position,(_limbAnchor.position+_movingOffset)-_limbTip.position),_checkDistance),
+            new MyRay(new Ray(startRay+_limbAnchor.up*3,startRay-(startRay+_limbAnchor.up*3)),8),
+            new MyRay( new Ray(startRay, _limbAnchor.right)),
+            new MyRay( new Ray(startRay, -_limbAnchor.right)),
+            new MyRay (new Ray(startRay, _limbAnchor.forward)),
+            new MyRay (new Ray(startRay, -_limbAnchor.forward))
+            };
         Vector3 placeCandidate = _limbTarget.position;
         Vector3 hitPoint = _limbTarget.position;
         float closestDistance = 100;
@@ -117,13 +146,20 @@ public class LimbStepper : MonoBehaviour
             //Debug.DrawRay(startRay, rays[i]);
             if (CheckLimbRay(rays[i], ref placeCandidate, out _, out Vector3 nomralCandidate, out _))
             {
-                float distance = Vector3.Distance(placeCandidate, _limbAnchor.position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    hitPoint = placeCandidate;
+                //Vector3 tmp= new Vector3();
+                //if (!CheckLimbRay(rays[i].GetReverseRay(),ref tmp, out _,out _,out _))
+                //{
                     _futureNormal = nomralCandidate;
-                }
+                    return placeCandidate;
+               // }
+
+                //float distance = Vector3.Distance(placeCandidate, _limbAnchor.position);
+                //if (distance < closestDistance)
+                //{
+                //    closestDistance = distance;
+                //    hitPoint = placeCandidate;
+                //    _futureNormal = nomralCandidate;
+                //}
             }
         }
         return hitPoint;
@@ -164,7 +200,7 @@ public class LimbStepper : MonoBehaviour
         _lerpValue += Time.deltaTime;
         float totalT = Vector3.Distance(_startingLerpPosition, _endLerpPosition) / _lerpSpeed;
         float t = _lerpValue / totalT;
-        
+        //MyRay checkAnchorRay = new MyRay(new Ray(_limbTip.position, _limbAnchor.position - _limbTip.position), 0.01f);
         while (_isLimbLerping == true)
         {
             _lerpValue += Time.deltaTime;
@@ -178,7 +214,6 @@ public class LimbStepper : MonoBehaviour
                     _isFirstTimeLerping = false;
                     _startingLerpPosition = _endLerpPosition;
                     _endLerpPosition = CastRaysForAnchor();
-                    testc.position = _endLerpPosition;
                     if (_wallTran !=null)
                     {
                         if(CastRayForWall(out Vector3 hitpoint)) _endLerpPosition=hitpoint;
@@ -194,7 +229,6 @@ public class LimbStepper : MonoBehaviour
                     _isLimbLerping = false;
                     _limbNormal=_futureNormal;
                     _lerpValue = 0;
-                    Debug.Log("end lerp all");
                 }
             }
             yield return null;
