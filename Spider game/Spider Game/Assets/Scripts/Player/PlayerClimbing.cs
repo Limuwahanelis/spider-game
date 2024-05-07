@@ -32,26 +32,13 @@ public class PlayerClimbing : MonoBehaviour
     [SerializeField] Transform _bodyCheck;
     [SerializeField] Transform _startClimbingTran;
 
-    //[SerializeField] Transform[] _limbsTransforms=new Transform[8];
-    //[SerializeField] Transform[] _limbsTargets = new Transform[8];
-    //[SerializeField] Transform[] _limbsForwardTrans = new Transform[8];
-
     [Header("Variables")]
-
-    [SerializeField] float _startClimbingSpeed;
-    [SerializeField] float _checkLength;
-    [SerializeField, Range(0, 1)] float _wallCheckAcceptance;
     [SerializeField] float _climbSpeed;
-    //[SerializeField] float _checkDistance;
 
 
     private Vector3[] _allHitNormals;
 
-    //private bool[] _allGroundSphereCastHits;
-    //private RaycastHit hit;
-    //private float addedHeight = 0.3f;
     private Quaternion _helperRotationOffset;
-    //Coroutine _climbingCor;
 
     //////////////////////////////////////
     [SerializeField] float _rayTowardsWall = 1f;
@@ -77,25 +64,10 @@ public class PlayerClimbing : MonoBehaviour
     bool _isJumping = false;
 
     ////// Legs
-    //[SerializeField] float _safeAreaRadius;
-    //[SerializeField] Transform[] _safeZones;
-    //float totalTime = 0f;
-    //[SerializeField] float _lerpSpeed = 1;
-    //private bool[] _isLimbLerping = new bool[8];
-    //private Vector3[] _startingLerpPositions= new Vector3[8];
-    //private Vector3[] _endLerpPositions = new Vector3[8];
-    //private float[] _lerpValues = new float[8];
-    //private bool[] _isFirstTimeLerping = new bool[8];
-    //[SerializeField] Transform[] _safeZoneRaycastOrigins= new Transform[8];
     private Transform _rotationHelper;
     // Start is called before the first frame update
     void Start()
     {
-
-
-        //_allGroundSphereCastHits = new bool[8];
-        //_allHitNormals = new Vector3[8];
-
     }
     public void InitHelper()
     {
@@ -103,7 +75,6 @@ public class PlayerClimbing : MonoBehaviour
         {
             _helper.position = transform.position;
             _helper.rotation = Quaternion.LookRotation(-transform.up, transform.forward); 
-           // _headHelper.rotation = Quaternion.LookRotation(-transform.up, transform.forward);// _helper.rotation;
             _spineHelper.rotation = _helper.rotation;
             _spineHelper.position = _headHelper.position;
             _headHelper.position = _helper.position + _helper.up * _headHelperOffsetFromFeet;
@@ -180,7 +151,9 @@ public class PlayerClimbing : MonoBehaviour
         Vector3 v = _helper.up * direction.y;
         Vector3 moveDir = (h + v).normalized;
         if (direction == Vector2.zero) return;
+        Vector3 tmp= _helper.position;
         bool canMove = CanMove(moveDir);
+        Debug.Log((_helper.position - tmp).magnitude);
         if (!canMove) return;
         _headHelper.position = _helper.position + _helper.up * _headHelperOffsetFromFeet;
         _headHelper.rotation = _helper.rotation;
@@ -231,11 +204,11 @@ public class PlayerClimbing : MonoBehaviour
         Debug.DrawRay(origin, dir * dis, Color.red);
         RaycastHit hit;
 
-        if (Physics.Raycast(origin, dir, out hit, dis, _climbingMask))// checks if there is wall perpendicualar to us
+        if (Physics.Raycast(origin, dir, out hit, dis, _climbingMask))// checks if there is wall in front of us
         {
             _helper.position = PosWithOffset(origin, hit.point);
             _helper.rotation = Quaternion.LookRotation(-hit.normal);
-            Debug.Log("perpendicular wall");
+            Debug.Log("Wall in front of us");
             return true;
         }
 
@@ -297,168 +270,19 @@ public class PlayerClimbing : MonoBehaviour
         Vector3 offset = direction * _offsetFromWall;
         return target + offset;
     }
-    #region Limbs
     public void RotateBody()
     {
+        Debug.Log(_man.AvgHeightDifference);
+        Quaternion RotX= Quaternion.AngleAxis(_man.AvgHeightDifference * _man.HeightToAngleRatio,transform.right);
+
         //_playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _helper.rotation * _helperRotationOffset, Time.deltaTime * _rotateSpeed);
-        _rotationHelper.rotation = Quaternion.LookRotation(-_man.avgNormals);
+
+        _rotationHelper.rotation = Quaternion.LookRotation(-_man.avgNormals,transform.forward);
         _playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _rotationHelper.rotation * _helperRotationOffset, Time.deltaTime * _rotateSpeed);
+        Quaternion toRot = RotX ;
+        _playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, toRot, Time.deltaTime * _rotateSpeed);
         //_playerMovement.PlayerRB.rotation = newRotation;
     }
-    //public void SetUpLimbs()
-    //{
-    //    //if (_isLerping) 
-    //        MoveLimbs();
-    //   // MoveLegsProcedural(Vector2.zero);
-
-    //}
-    //private void SetFutherestLimb()
-    //{
-    //    float furtherestDistance = Vector3.Distance(_limbsTargets[0].position, _safeZones[0].position);
-    //    int futherestLegIndex = -1;
-    //    bool endCheck = false;
-    //    for (int i = 0; i < 8; i++)
-    //    {
-    //        if (_isLimbLerping[i]) endCheck = true;
-    //        if (endCheck) break;
-    //        float distance = Vector3.Distance(_limbsTargets[i].position, _safeZones[i].position);
-    //        if (distance > _safeAreaRadius)
-    //        {
-    //            if (distance >= furtherestDistance)
-    //            {
-    //                furtherestDistance = distance;
-    //                futherestLegIndex = i;
-    //            }
-    //        }
-    //    }
-    //    if (!endCheck)
-    //    {
-    //        if (futherestLegIndex != -1)
-    //        {
-    //            if (!_isLimbLerping[futherestLegIndex])
-    //            {
-    //                //if (endCheck) continue;
-    //                _isLimbLerping[futherestLegIndex] = true;
-    //                _isFirstTimeLerping[futherestLegIndex] = true;
-    //                _startingLerpPositions[futherestLegIndex] = _limbsTargets[futherestLegIndex].position;
-    //                Vector3 endLerpPos = _limbsTargets[futherestLegIndex].position + (_safeZones[futherestLegIndex].position - _limbsTargets[futherestLegIndex].position) / 2;
-    //                endLerpPos += transform.up * 0.5f;
-    //                _endLerpPositions[futherestLegIndex] = endLerpPos;
-    //            }
-    //        }
-    //    }
-    //}
-    //private void LerpLimb(int limbIndex)
-    //{
-    //    _lerpValues[limbIndex] += Time.deltaTime;
-    //    float totalT = Vector3.Distance(_startingLerpPositions[limbIndex], _endLerpPositions[limbIndex]) / _lerpSpeed;
-    //    float t = _lerpValues[limbIndex] / totalT;
-    //    _limbsTargets[limbIndex].position = Vector3.Lerp(_startingLerpPositions[limbIndex], _endLerpPositions[limbIndex], t);
-    //    if (_isFirstTimeLerping[limbIndex])
-    //    {
-    //        if (t >= 1)
-    //        {
-    //            _isFirstTimeLerping[limbIndex] = false;
-    //            _startingLerpPositions[limbIndex] = _endLerpPositions[limbIndex];
-    //            Debug.DrawRay(_safeZoneRaycastOrigins[limbIndex].position, (_safeZones[limbIndex].position - _safeZoneRaycastOrigins[limbIndex].position).normalized*3f);
-    //            if (Physics.Raycast(_safeZoneRaycastOrigins[limbIndex].position, (_safeZones[limbIndex].position - _safeZoneRaycastOrigins[limbIndex].position).normalized, out hit, 3f, _climbingMask))
-    //            {
-    //                _endLerpPositions[limbIndex] = hit.point;
-    //                _safeZones[limbIndex].position = hit.point;
-    //            }
-    //            else _endLerpPositions[limbIndex] = _safeZones[limbIndex].position;
-    //            _lerpValues[limbIndex] = 0;
-    //        }
-    //    }
-    //    else
-    //    {
-    //        if (t >= 1)
-    //        {
-    //            _limbsTargets[limbIndex].position = _endLerpPositions[limbIndex];
-    //            _isLimbLerping[limbIndex] = false;
-    //            _lerpValues[limbIndex] = 0;
-    //        }
-    //    }
-    //}
-    //private void MoveLimbs()
-    //{
-    //    SetFutherestLimb();
-    //    for (int i = 0; i < 8; i++)
-    //    {
-    //        CastRayForLimb(_limbsTransforms[i], addedHeight, _limbsForwardTrans[i], out Vector3 hitPoint, out _, out Vector3 hitNormal, out _allGroundSphereCastHits[i]);
-    //        _allHitNormals[i] = hitNormal;
-
-    //        // Adjust feet when not moving
-    //        if (!_isLimbLerping[i])
-    //        {
-    //            if (Vector3.Distance(_limbsTargets[i].position, hitPoint) > 0.2f) _limbsTargets[i].position = hitPoint;
-    //        }
-    //        else
-    //        {
-    //            LerpLimb(i);
-    //        }
-    //    }
-
-
-    //}
-
-    //private void CastRayForLimb(Transform origin, float addedHeight, Transform limbForwardTran, out Vector3 hitpoint, out float currentHitDistance, out Vector3 hitNormal, out bool gotCastHit)
-    //{
-    //    Vector3 startRay = origin.position - limbForwardTran.up * addedHeight;
-    //    Ray limbRay = new Ray(startRay, limbForwardTran.up / 2);
-    //    Debug.DrawRay(startRay, limbForwardTran.up / 2, Color.red);
-    //    RaycastHit hit;
-    //    if (Physics.Raycast(limbRay, out hit, _checkDistance, _climbingMask))
-    //    {
-    //        hitNormal = hit.normal;
-    //        hitpoint = hit.point;
-    //        currentHitDistance = hit.distance + addedHeight;
-    //        gotCastHit = true;
-    //    }
-    //    else
-    //    {
-    //        startRay = origin.position + limbForwardTran.up * 0.15f;
-    //        if (CheckLimbRay(startRay, limbForwardTran.right, out hitpoint, out currentHitDistance, out hitNormal, out gotCastHit)) return;
-    //        if (CheckLimbRay(startRay, -limbForwardTran.right, out hitpoint, out currentHitDistance, out hitNormal, out gotCastHit)) return;
-    //        if (CheckLimbRay(startRay, limbForwardTran.forward, out hitpoint, out currentHitDistance, out hitNormal, out gotCastHit)) return;
-    //        if (CheckLimbRay(startRay, -limbForwardTran.forward, out hitpoint, out currentHitDistance, out hitNormal, out gotCastHit)) return;
-    //        else
-    //        {
-    //            hitNormal = Vector3.zero;
-    //            gotCastHit = false;
-    //            hitpoint = origin.position;
-    //            currentHitDistance = 0;
-    //        }
-    //    }
-    //}
-    //private bool CheckLimbRay(Vector3 rayStart, Vector3 rayDirection, out Vector3 hitpoint, out float currentHitDistance, out Vector3 hitNormal, out bool gotCastHit)
-    //{
-    //    hitNormal = Vector3.zero;
-    //    gotCastHit = false;
-    //    hitpoint = rayStart;
-    //    currentHitDistance = 0;
-    //    Ray limbRay = new Ray(rayStart, rayDirection);
-    //    Debug.DrawRay(rayStart, rayDirection, Color.green);
-    //    if (Physics.Raycast(limbRay, out hit, _checkDistance, _climbingMask))
-    //    {
-    //        hitNormal = hit.normal;
-    //        hitpoint = hit.point;
-    //        currentHitDistance = hit.distance + addedHeight;
-    //        gotCastHit = true;
-    //        return true;
-    //    }
-    //    return false;
-    //}
-    #endregion
-    private void OnDrawGizmosSelected()
-    {
-        //for(int i=0;i<8;i++)
-        //{
-        //    Gizmos.DrawWireSphere(_safeZones[i].position,_safeAreaRadius);
-        //}
-        //Gizmos.DrawLine(_bodyCheck.position, _bodyCheck.position + _bodyCheck.forward * _checkLength);
-    }
-    ///////////////////
 
 
 
