@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Animations.Rigging;
 using static UnityEngine.GraphicsBuffer;
+using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 public static class CCDIKSolver
 {
@@ -59,22 +60,37 @@ public static class CCDIKSolver
     }
     #endregion
     #region Animation rigging
-    public static bool SolveCCDIK(ref AnimationStream stream, float tolerance, int maxIterations, ref NativeArray<ReadWriteTransformHandle> chain, ReadOnlyTransformHandle target, ReadWriteTransformHandle endEffector, NativeArray<Vector3> jointsAxis,
+    public static bool SolveCCDIK(ref AnimationStream stream, float tolerance, int maxIterations, ref NativeArray<ReadWriteTransformHandle> chain, ReadOnlyTransformHandle target, ReadWriteTransformHandle endEffector,ref NativeArray<Vector3> jointsAxis,
        ref NativeArray<float> jointsCurrentAngle, NativeArray<float> jointsMinAngle, NativeArray<float> jointsMaxAngle, bool debug = false)
     {
         int iterations = 0;
         float distance = Vector3.Distance(endEffector.GetPosition(stream), target.GetPosition(stream));
+        Quaternion[] oldRotations = new Quaternion[chain.Length];
+
+
         while (iterations <= maxIterations && distance > tolerance)
         {
+
+            oldRotations[0] = chain[0].GetRotation(stream);
             int k = 0;
             for (int i = chain.Length; i > 0;)
             {
+                if(i==chain.Length-1)
+                {
+                    for(int j=0;j<chain.Length;j++)
+                    {
+                        oldRotations[j]= chain[j].GetRotation(stream);
+                    }
+                }
                 var handle = chain[k];
                 float currentAngle = jointsCurrentAngle[k];
-                SolveCCDIKStep(ref stream, ref handle, endEffector, target, jointsAxis[k], ref currentAngle, jointsMinAngle[k], jointsMaxAngle[k],debug);
+                Vector3 jointAxis = jointsAxis[k];
+                SolveCCDIKStep(ref stream, ref handle, endEffector, target,ref jointAxis, ref currentAngle, jointsMinAngle[k], jointsMaxAngle[k], oldRotations[k],debug);
+                jointsAxis[k] = jointAxis;
                 jointsCurrentAngle[k] = currentAngle;
                 i--;
                 k = i;
+
             }
             distance = Vector3.Distance(endEffector.GetPosition(stream), target.GetPosition(stream));
             iterations++;
@@ -83,33 +99,36 @@ public static class CCDIKSolver
         if (iterations >= maxIterations && distance > tolerance) return false;
         return true;
     }
-    public static void SolveCCDIKStep(ref AnimationStream stream,ref ReadWriteTransformHandle joint, ReadWriteTransformHandle endEffector, ReadOnlyTransformHandle target,Vector3 rotationAxis ,ref float totalAngle, float minAngle, float maxAngle,bool debug)
+    public static void SolveCCDIKStep(ref AnimationStream stream,ref ReadWriteTransformHandle joint, ReadWriteTransformHandle endEffector, ReadOnlyTransformHandle target,ref Vector3 rotationAxis ,ref float totalAngle, float minAngle, float maxAngle,Quaternion oldRotation,bool debug)
     {
         Vector3 directionToEffector = (endEffector.GetPosition(stream) - joint.GetPosition(stream));
         Vector3 directionToGoal = (target.GetPosition(stream) - joint.GetPosition(stream));
-
+        Quaternion diff = joint.GetRotation(stream)*Quaternion.Inverse(oldRotation);
+        Vector3 rotatedAxis = diff * rotationAxis;
+        //Debug.Log($"diff in ax: {rotatedAxis - rotationAxis}");
+        rotationAxis = rotatedAxis;
         // Vector are projected on plane with the same normal in order to correctly calculate signed angles between them
-        Vector3 toEffectorProjected = Vector3.ProjectOnPlane(directionToEffector, rotationAxis);
-        Vector3 toTargetProjected = Vector3.ProjectOnPlane(directionToGoal, rotationAxis);
+        Vector3 toEffectorProjected = Vector3.ProjectOnPlane(directionToEffector, rotatedAxis);
+        Vector3 toTargetProjected = Vector3.ProjectOnPlane(directionToGoal, rotatedAxis);
 
         if (debug)
         {
             Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + toEffectorProjected, Color.magenta);
             Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + toTargetProjected, Color.green);
 
-            Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + rotationAxis * 2, Color.yellow);
+            Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + rotatedAxis * 2, Color.yellow);
             Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + directionToEffector, Color.red);
             Debug.DrawLine(joint.GetPosition(stream), joint.GetPosition(stream) + directionToGoal);
         }
 
         if (directionToGoal == Vector3.zero || directionToEffector == Vector3.zero) return;
-        float angle = Vector3.SignedAngle(toEffectorProjected, toTargetProjected, rotationAxis);
+        float angle = Vector3.SignedAngle(toEffectorProjected, toTargetProjected, rotatedAxis);
         angle = Mathf.Clamp(totalAngle + angle, minAngle, maxAngle) - totalAngle;
 
-        Quaternion rot = Quaternion.AngleAxis(angle, rotationAxis);
+        Quaternion rot = Quaternion.AngleAxis(angle, rotatedAxis);
         Quaternion myRot = joint.GetRotation(stream);
 
-        joint.SetRotation(stream,joint.GetRotation(stream)* Quaternion.Inverse(myRot) * rot * myRot);
+        joint.SetRotation(stream,rot * myRot);
         totalAngle += angle;
     }
     public static void SolveCCDIKFrame(ref AnimationStream stream, ref NativeArray<ReadWriteTransformHandle> chain, ReadWriteTransformHandle target, ref ReadWriteTransformHandle endEffector, ref NativeArray<Vector3> jointsAxis,

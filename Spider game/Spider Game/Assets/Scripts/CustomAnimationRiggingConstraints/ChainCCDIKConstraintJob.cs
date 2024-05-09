@@ -17,6 +17,7 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
     public NativeArray<float> jointsMinAngle;
     public NativeArray<float> jointsMaxAngle;
     public int index;
+
     /// <summary>An array of Transform handles that represents the Transform chain.</summary>
     public NativeArray<ReadWriteTransformHandle> chain;
 
@@ -51,10 +52,10 @@ public struct ChainCCDIKConstraintJob : IWeightedAnimationJob
                 chain[i].SetRotation(stream, chainRotations[i]);
             }
 
-            if (debug) CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle);
+            if (debug) CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector,ref jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle);
             else
             {
-                if (!CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle))
+                if (!CCDIKSolver.SolveCCDIK(ref stream, cache.GetRaw(toleranceIdx), (int)cache.GetRaw(maxIterationsIdx), ref chain, target, endEffector, ref jointsAxis, ref jointsCurrentAngle, jointsMinAngle, jointsMaxAngle))
                 {
                     OnNewTargetRequired?.Invoke(index);
                 }
@@ -119,6 +120,7 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.endEffector = ReadWriteTransformHandle.Bind(animator, chain[chain.Length-1]);
         job.chainRotations =new NativeArray<Quaternion>(chain.Length-1,Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         job.needsNewTarget = false;
+
         for (int i = 0; i < job.chain.Length; i++)
         {
             MyHingeJoint joint = chain[i].GetComponent<MyHingeJoint>();
@@ -146,7 +148,12 @@ public class ChainCCDIKConstraintJobBinder<T> : AnimationJobBinder<ChainCCDIKCon
         job.cache.SetRaw(data.Tolerance, job.toleranceIdx);
         for (int i = 0; i < data.joints.Count; i++)
         {
+            Vector3 diff= job.jointsAxis[i] - data.joints[i].GetGlobalRotationAxis();
             job.jointsAxis[i] = data.joints[i].GetGlobalRotationAxis();
+            //if (diff.magnitude > 0.01)
+            // Debug.Log(diff);
+
+
             //if (i == 0) Debug.Log(job.jointsAxis[i]);
         }
     }
