@@ -51,6 +51,10 @@ public class MyHingeJoint : MonoBehaviour
     {
         transform.RotateAround(transform.position, GetGlobalRotationAxis(), angle);
     }
+    public void SetRotationAxisAsLocal(Vector3 newAxis)
+    {
+        _rotationAxisLocal = transform.InverseTransformDirection(newAxis);
+    }
     public void SetUp()
     {
         Vector3 up;
@@ -75,6 +79,9 @@ public class MyHingeJoint : MonoBehaviour
             serializedObject.Update();
             if(GUILayout.Button("Rotate right 5 degree")) _hinge.RotateAroundAxis(5f);
             if (GUILayout.Button("Rotate left 5 degree")) _hinge.RotateAroundAxis(-5f);
+            if (GUILayout.Button("Rotate right 30 degree")) _hinge.RotateAroundAxis(30f);
+            if (GUILayout.Button("Rotate left 30 degree")) _hinge.RotateAroundAxis(-30f);
+            if (GUILayout.Button("Set down as axis")) _hinge.SetRotationAxisAsLocal(Vector3.down);
             serializedObject.ApplyModifiedProperties();
         }
     }
