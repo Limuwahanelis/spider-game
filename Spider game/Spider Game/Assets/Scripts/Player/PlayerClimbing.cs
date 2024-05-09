@@ -272,7 +272,7 @@ public class PlayerClimbing : MonoBehaviour
     }
     public void RotateBody()
     {
-        Debug.Log(_man.AvgHeightDifference);
+        //Debug.Log(_man.AvgHeightDifference);
         Quaternion RotX= Quaternion.AngleAxis(_man.AvgHeightDifference * _man.HeightToAngleRatio,transform.right);
 
         //_playerMovement.PlayerRB.rotation = Quaternion.Slerp(_playerMovement.PlayerRB.rotation, _helper.rotation * _helperRotationOffset, Time.deltaTime * _rotateSpeed);
